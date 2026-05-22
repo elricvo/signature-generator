@@ -1,0 +1,37 @@
+{
+  "profileName": "example",
+  "logoFileName": "logo.png",
+  "logoDataUrl": "",
+  "logoWidth": "110",
+  "gap": "16",
+  "fields": {
+    "name": "Jane Doe",
+    "title": "Founder",
+    "phone": "+1 555 0100",
+    "email": "jane@example.com",
+    "website": "https://example.com",
+    "tagline": "Simple, reliable email signatures",
+    "address": "1 Example Street, Example City",
+    "freeText": ""
+  },
+  "styles": {
+    "name": { "font": "Arial, Helvetica, sans-serif", "size": "18px", "color": "#2f6d80", "weight": "bold", "italic": false },
+    "title": { "font": "Arial, Helvetica, sans-serif", "size": "14px", "color": "#737373", "weight": "normal", "italic": false },
+    "phone": { "font": "Arial, Helvetica, sans-serif", "size": "14px", "color": "#222222", "weight": "normal", "italic": false },
+    "email": { "font": "Arial, Helvetica, sans-serif", "size": "14px", "color": "#222222", "weight": "normal", "italic": false },
+    "website": { "font": "Arial, Helvetica, sans-serif", "size": "14px", "color": "#222222", "weight": "normal", "italic": false },
+    "tagline": { "font": "Arial, Helvetica, sans-serif", "size": "14px", "color": "#222222", "weight": "normal", "italic": false },
+    "address": { "font": "Arial, Helvetica, sans-serif", "size": "12px", "color": "#737373", "weight": "normal", "italic": false },
+    "freeText": { "font": "Arial, Helvetica, sans-serif", "size": "12px", "color": "#737373", "weight": "normal", "italic": false }
+  },
+  "socials": {
+    "linkedin": { "enabled": true, "url": "https://www.linkedin.com/" },
+    "facebook": { "enabled": false, "url": "" },
+    "instagram": { "enabled": false, "url": "" },
+    "x": { "enabled": false, "url": "" },
+    "youtube": { "enabled": false, "url": "" },
+    "tiktok": { "enabled": false, "url": "" },
+    "github": { "enabled": false, "url": "" },
+    "whatsapp": { "enabled": false, "url": "" }
+  }
+}
