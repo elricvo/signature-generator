@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Générateur de signature Thunderbird</title>
+  <style>
+    :root { --accent:#2f6d80; --night:#071832; --night2:#0b2448; --bg:#f6f7f8; --card:#fff; --text:#1d1d1f; --muted:#666; }
+    body { margin:0; font-family: Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text); }
+    header { position:relative; overflow:hidden; background:linear-gradient(110deg, var(--night) 0%, var(--night2) 55%, #081326 100%); color:#fff; padding:18px 24px; }
+    header::before { content:""; position:absolute; inset:-80px auto -80px -140px; width:56%; background:radial-gradient(circle at left center, rgba(118,184,255,.62) 0%, rgba(72,139,218,.28) 28%, rgba(7,24,50,0) 68%); filter:blur(8px); transform:skewX(-12deg); pointer-events:none; }
+    header::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 22%, rgba(255,255,255,0) 54%); pointer-events:none; }
+    header > * { position:relative; z-index:1; }
+    .header-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    main { display:grid; grid-template-columns: minmax(360px, 620px) 1fr; gap:20px; padding:20px; }
+    section { background:var(--card); border-radius:10px; padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .preview-panel { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto; }
+    h1, h2, h3 { margin-top:0; }
+    label { display:block; font-size:13px; font-weight:bold; margin-top:12px; color:#333; }
+    input, textarea, select { width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ccc; border-radius:6px; font:inherit; }
+    textarea { min-height:70px; resize:vertical; }
+    .field-card { border:1px solid #e2e4e7; border-radius:9px; padding:12px; margin-top:12px; background:#fbfbfc; }
+    .style-row { display:grid; grid-template-columns: 1.5fr .75fr .65fr .75fr .55fr; gap:8px; align-items:end; margin-top:8px; }
+    .profile-row { display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:end; }
+    .profile-row button { margin:5px 0 0 0; }
+    .logo-row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px; }
+    .social-grid { display:grid; grid-template-columns: 110px 1fr; gap:8px 10px; align-items:center; margin-top:10px; }
+    .social-enabled { display:flex; align-items:center; gap:7px; font-size:13px; font-weight:bold; color:#333; }
+    .social-enabled input { width:auto; margin:0; }
+    .style-row label, .logo-row label, .social-grid label { margin-top:0; font-size:11px; color:#555; }
+    .inline-check { display:flex; align-items:center; gap:6px; font-size:12px; color:#444; margin-top:22px; }
+    .inline-check input { width:auto; margin:0; }
+    button { border:0; background:var(--accent); color:#fff; padding:10px 14px; border-radius:7px; cursor:pointer; font-weight:bold; margin:10px 8px 0 0; }
+    button.secondary { background:#555; }
+    button.light { background:#e9ecef; color:#222; }
+    button.help-button { background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.35); color:#fff; margin:0; white-space:nowrap; }
+    button.help-button:hover { background:rgba(255,255,255,.24); }
+    .hint { color:var(--muted); font-size:13px; line-height:1.45; }
+    iframe { width:100%; height:260px; border:1px solid #ddd; background:#fff; border-radius:8px; }
+    pre { white-space:pre-wrap; word-break:break-word; max-height:280px; overflow:auto; background:#111; color:#eee; padding:12px; border-radius:8px; font-size:12px; }
+    .ok { color:#18794e; font-weight:bold; }
+    .warn { color:#9a6700; font-weight:bold; }
+    dialog { width:min(760px, calc(100vw - 32px)); border:0; border-radius:12px; padding:0; box-shadow:0 18px 60px rgba(0,0,0,.28); }
+    dialog::backdrop { background:rgba(7,24,50,.48); backdrop-filter:blur(2px); }
+    .help-content { padding:20px 22px; line-height:1.5; }
+    .help-content h2 { color:var(--night); }
+    .help-content code { background:#eef1f5; padding:2px 5px; border-radius:4px; }
+    .help-actions { text-align:right; border-top:1px solid #e5e7eb; padding:12px 22px 16px; }
+    @media (max-width:1000px){ main{ grid-template-columns:1fr; } .profile-row{ grid-template-columns:1fr; } .style-row{ grid-template-columns:1fr 1fr; } .social-grid{ grid-template-columns:1fr; } .preview-panel{ position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <h1>Générateur de signature Thunderbird</h1>
+    <button class="help-button" onclick="showHelp()" type="button">Aide</button>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>Paramètres</h2>
+    <p class="hint">Vous pouvez charger un profil par défaut via le bouton charger un profil json.</p>
+
+    <div class="profile-row">
+      <div>
+        <label>Charger un profil JSON</label>
+        <input id="profile" type="file" accept="application/json,.json">
+      </div>
+      <button class="light" onclick="saveProfileAsJson()" type="button">Sauver ce profil en JSON</button>
+    </div>
+
+    <label>Logo</label>
+    <input id="logo" type="file" accept="image/*">
+    <div class="logo-row">
+      <div><label>Largeur logo (px)</label><input id="logoWidth" type="number" value="110" min="20" max="500"></div>
+      <div><label>Espace logo/texte (px)</label><input id="gap" type="number" value="16" min="0" max="80"></div>
+    </div>
+
+    <div id="fields"></div>
+
+    <div class="field-card">
+      <label>Réseaux sociaux</label>
+      <p class="hint">Sélectionnez les boutons à afficher puis renseignez l’URL complète du profil.</p>
+      <div id="socials" class="social-grid"></div>
+    </div>
+
+    <button onclick="renderAll()">Prévisualiser</button>
+    <button onclick="downloadBase64()">Télécharger signature-base64.html</button>
+    <button class="secondary" onclick="downloadRelative()">Télécharger signature.html + logo séparé</button>
+    <button class="light" onclick="downloadReadme()">Télécharger README.txt</button>
+    <p id="status" class="hint"></p>
+  </section>
+
+  <section class="preview-panel">
+    <h2>Prévisualisation</h2>
+    <iframe id="preview" title="Prévisualisation signature"></iframe>
+    <h3>HTML généré</h3>
+    <pre id="code"></pre>
+  </section>
+</main>
+
+<dialog id="helpDialog">
+  <div class="help-content">
+    <h2>Aide</h2>
+    <p>Ce générateur crée une signature HTML compatible Thunderbird. La version recommandée est <code>signature-base64.html</code>, car elle embarque le logo directement dans le fichier.</p>
+    <ol>
+      <li>Optionnel : charger un profil JSON pour préremplir le générateur, ou sauver la configuration courante avec <strong>Sauver ce profil en JSON</strong>.</li>
+      <li>Choisir ou remplacer le logo si nécessaire.</li>
+      <li>Remplir les champs de texte utiles.</li>
+      <li>Ajuster la police, la taille, la couleur, la graisse et l’italique champ par champ.</li>
+      <li>Optionnel : sélectionner les réseaux sociaux à afficher et renseigner les liens de profils.</li>
+      <li>Cliquer sur <strong>Prévisualiser</strong>.</li>
+      <li>Télécharger <code>signature-base64.html</code>.</li>
+      <li>Dans Thunderbird : Paramètres des comptes → Apposer la signature à partir d’un fichier → sélectionner <code>signature-base64.html</code>.</li>
+    </ol>
+    <p>La variante <code>signature.html + logo séparé</code> fonctionne aussi, mais le logo doit rester dans le même dossier que le fichier HTML.</p>
+    <p>Conseil : pour éviter les déformations, le logo est généré avec une largeur fixe et une hauteur automatique.</p>
+  </div>
+  <div class="help-actions">
+    <button class="secondary" onclick="closeHelp()" type="button">Fermer</button>
+  </div>
+</dialog>
+
+<script>
+let logoDataUrl = '';
+let logoFileName = 'logo.png';
+
+const FIELD_DEFS = [
+  ['name', 'Nom', 'text'],
+  ['title', 'Titre / fonction', 'text'],
+  ['phone', 'Téléphone', 'text'],
+  ['email', 'Email', 'email'],
+  ['website', 'Site web', 'text'],
+  ['tagline', "Phrase d'accroche", 'text'],
+  ['address', 'Adresse', 'text'],
+  ['freeText', 'Texte libre', 'textarea']
+];
+const SOCIAL_DEFS = [
+  ['linkedin', 'LinkedIn', '#0A66C2'],
+  ['facebook', 'Facebook', '#1877F2'],
+  ['instagram', 'Instagram', '#C13584'],
+  ['x', 'X', '#111111'],
+  ['youtube', 'YouTube', '#FF0000'],
+  ['tiktok', 'TikTok', '#111111'],
+  ['github', 'GitHub', '#24292f'],
+  ['whatsapp', 'WhatsApp', '#25D366']
+];
+const FONT_OPTIONS = [
+  'Arial, Helvetica, sans-serif',
+  'Verdana, Geneva, sans-serif',
+  'Tahoma, Geneva, sans-serif',
+  'Trebuchet MS, Helvetica, sans-serif',
+  'Georgia, serif',
+  'Times New Roman, Times, serif',
+  'Courier New, Courier, monospace'
+];
+const DEFAULT_STYLE = { font:'Arial, Helvetica, sans-serif', size:'14px', color:'#222222', weight:'normal', italic:false };
+const DEFAULT_STYLES = {
+  name:{...DEFAULT_STYLE, size:'18px', color:'#2f6d80', weight:'bold'},
+  title:{...DEFAULT_STYLE, color:'#737373'},
+  address:{...DEFAULT_STYLE, size:'12px', color:'#737373'},
+  freeText:{...DEFAULT_STYLE, size:'12px', color:'#737373'}
+};
+
+const $ = id => document.getElementById(id);
+function showHelp() { $('helpDialog').showModal(); }
+function closeHelp() { $('helpDialog').close(); }
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function val(id) { return $(id).value.trim(); }
+function styleFor(id) {
+  return {
+    font: $(`${id}Font`).value || DEFAULT_STYLE.font,
+    size: $(`${id}Size`).value || DEFAULT_STYLE.size,
+    color: $(`${id}Color`).value || DEFAULT_STYLE.color,
+    weight: $(`${id}Weight`).value || DEFAULT_STYLE.weight,
+    italic: $(`${id}Italic`).checked
+  };
+}
+function cssFor(style, extra='') {
+  return `font-family: ${esc(style.font)}; font-size: ${esc(style.size)}; color: ${esc(style.color)}; font-weight: ${esc(style.weight)}; font-style: ${style.italic ? 'italic' : 'normal'}; ${extra}`;
+}
+function populateFields() {
+  $('fields').innerHTML = FIELD_DEFS.map(([id, label, type]) => {
+    const s = DEFAULT_STYLES[id] || DEFAULT_STYLE;
+    const input = type === 'textarea'
+      ? `<textarea id="${id}"></textarea>`
+      : `<input id="${id}" type="${type}" value="">`;
+    const fonts = FONT_OPTIONS.map(f => `<option value="${esc(f)}" ${f===s.font?'selected':''}>${esc(f.split(',')[0])}</option>`).join('');
+    return `<div class="field-card">
+      <label for="${id}">${esc(label)}</label>
+      ${input}
+      <div class="style-row" aria-label="Style ${esc(label)}">
+        <div><label>Police</label><select id="${id}Font">${fonts}</select></div>
+        <div><label>Taille</label><input id="${id}Size" value="${esc(s.size)}"></div>
+        <div><label>Couleur</label><input id="${id}Color" type="color" value="${esc(s.color)}"></div>
+        <div><label>Graisse</label><select id="${id}Weight"><option value="normal" ${s.weight==='normal'?'selected':''}>Normal</option><option value="bold" ${s.weight==='bold'?'selected':''}>Gras</option></select></div>
+        <label class="inline-check"><input id="${id}Italic" type="checkbox" ${s.italic?'checked':''}> Italique</label>
+      </div>
+    </div>`;
+  }).join('');
+}
+function populateSocials() {
+  $('socials').innerHTML = SOCIAL_DEFS.map(([id, label]) => `
+    <label class="social-enabled"><input id="social_${id}_enabled" type="checkbox"> ${esc(label)}</label>
+    <input id="social_${id}_url" type="url" placeholder="https://..." aria-label="Lien ${esc(label)}">
+  `).join('');
+}
+
+$('logo').addEventListener('change', ev => {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  logoFileName = file.name.replace(/[^A-Za-z0-9._-]+/g, '-') || 'logo.png';
+  const reader = new FileReader();
+  reader.onload = () => { logoDataUrl = reader.result; renderAll(); };
+  reader.readAsDataURL(file);
+});
+$('profile').addEventListener('change', ev => {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try { applyProfile(JSON.parse(reader.result)); renderAll(); }
+    catch (e) { alert('Profil JSON invalide : ' + e.message); }
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+function applyProfile(profile) {
+  const fields = profile.fields || {};
+  const styles = profile.styles || {};
+  FIELD_DEFS.forEach(([id]) => {
+    if (fields[id] !== undefined) $(id).value = fields[id];
+    const s = {...(DEFAULT_STYLES[id] || DEFAULT_STYLE), ...(styles[id] || {})};
+    $(`${id}Font`).value = s.font || DEFAULT_STYLE.font;
+    $(`${id}Size`).value = s.size || DEFAULT_STYLE.size;
+    $(`${id}Color`).value = s.color || DEFAULT_STYLE.color;
+    $(`${id}Weight`).value = s.weight || DEFAULT_STYLE.weight;
+    $(`${id}Italic`).checked = !!s.italic;
+  });
+  if (profile.logoWidth !== undefined) $('logoWidth').value = profile.logoWidth;
+  if (profile.gap !== undefined) $('gap').value = profile.gap;
+  if (profile.logoFileName) logoFileName = String(profile.logoFileName).replace(/[^A-Za-z0-9._-]+/g, '-') || 'logo.png';
+  if (profile.logoDataUrl) logoDataUrl = profile.logoDataUrl;
+  const socials = profile.socials || {};
+  SOCIAL_DEFS.forEach(([id]) => {
+    const item = socials[id] || {};
+    $(`social_${id}_enabled`).checked = !!item.enabled;
+    $(`social_${id}_url`).value = item.url || '';
+  });
+  $('status').innerHTML = '<span class="ok">Profil chargé.</span>';
+}
+function currentProfile() {
+  const fields = {}, styles = {}, socials = {};
+  FIELD_DEFS.forEach(([id]) => { fields[id] = val(id); styles[id] = styleFor(id); });
+  SOCIAL_DEFS.forEach(([id]) => { socials[id] = { enabled: $(`social_${id}_enabled`).checked, url: val(`social_${id}_url`) }; });
+  return { profileName:'signature', logoFileName, logoDataUrl, logoWidth:val('logoWidth'), gap:val('gap'), fields, styles, socials };
+}
+function line(id, label, value) {
+  if (!value) return '';
+  const s = styleFor(id);
+  return `<div style="${cssFor(s, 'margin-bottom: 4px;')}"><strong>${esc(label)} :</strong> ${esc(value)}</div>`;
+}
+function linkLine(id, label, value, href) {
+  if (!value) return '';
+  const s = styleFor(id);
+  return `<div style="${cssFor(s, 'margin-bottom: 4px;')}"><strong>${esc(label)} :</strong> <a href="${esc(href)}" style="color: inherit; text-decoration: none;">${esc(value)}</a></div>`;
+}
+function normalizeUrl(url) {
+  if (!url) return '';
+  return /^[a-z]+:\/\//i.test(url) ? url : 'https://' + url;
+}
+function socialButtonsHtml() {
+  const enabled = SOCIAL_DEFS
+    .map(([id, label, color]) => ({ id, label, color, url: normalizeUrl(val(`social_${id}_url`)), enabled: $(`social_${id}_enabled`).checked }))
+    .filter(item => item.enabled && item.url);
+  if (!enabled.length) return '';
+  const links = enabled.map(item => `<a href="${esc(item.url)}" style="display: inline-block; margin: 8px 6px 0 0; padding: 5px 9px; background: ${esc(item.color)}; color: #ffffff; text-decoration: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; line-height: 1.2; border: 0;">${esc(item.label)}</a>`).join('');
+  return `<div style="margin-top: 8px;">${links}</div>`;
+}
+function buildHtml(mode) {
+  const imgSrc = mode === 'relative' ? logoFileName : (logoDataUrl || '');
+  const website = val('website');
+  const webHref = website ? normalizeUrl(website) : '';
+  const free = val('freeText').split(/\r?\n/).filter(Boolean).map(esc).join('<br>');
+  const nameStyle = styleFor('name');
+  const titleStyle = styleFor('title');
+  const taglineStyle = styleFor('tagline');
+  const addressStyle = styleFor('address');
+  const freeStyle = styleFor('freeText');
+  const fallbackFont = nameStyle.font || DEFAULT_STYLE.font;
+  const fallbackSize = styleFor('phone').size || DEFAULT_STYLE.size;
+  const blocks = [
+    val('title') ? `<div style="${cssFor(titleStyle, 'margin-bottom: 6px;')}">${esc(val('title'))}</div>` : '',
+    line('phone', 'Tel', val('phone')),
+    linkLine('email', 'Email', val('email'), 'mailto:' + val('email')),
+    linkLine('website', 'Web', website, webHref),
+    val('tagline') ? `<div style="${cssFor(taglineStyle, 'margin: 10px 0;')}">${esc(val('tagline'))}</div>` : '',
+    val('address') ? `<div style="${cssFor(addressStyle)}">${esc(val('address'))}</div>` : '',
+    free ? `<div style="${cssFor(freeStyle, 'margin-top: 8px;')}">${free}</div>` : '',
+    socialButtonsHtml()
+  ].filter(Boolean).join('\n        ');
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Signature email</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: ${esc(fallbackFont)};">
+  <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; border: 0; outline: none; font-family: ${esc(fallbackFont)};">
+    <tr>
+      <td valign="top" style="padding-right: ${parseInt(val('gap') || '16', 10)}px; border: 0; outline: none;">
+        <img src="${esc(imgSrc)}" alt="Logo" width="${parseInt(val('logoWidth') || '110', 10)}" style="display: block; width: ${parseInt(val('logoWidth') || '110', 10)}px; height: auto; border: 0; outline: none;">
+      </td>
+      <td valign="top" style="font-size: ${esc(fallbackSize)}; line-height: 1.45; border: 0; outline: none; font-family: ${esc(fallbackFont)};">
+        ${val('name') ? `<div style="${cssFor(nameStyle, 'margin-bottom: 4px;')}">${esc(val('name'))}</div>` : ''}
+        ${blocks}
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+function renderAll() {
+  const html = buildHtml('base64');
+  $('preview').srcdoc = html;
+  $('code').textContent = html;
+  $('status').innerHTML = logoDataUrl ? '<span class="ok">Logo chargé. Signature base64 prête.</span>' : '<span class="warn">Choisis un logo ou charge un profil avec logo intégré.</span>';
+}
+function download(name, content, type='text/html;charset=utf-8') {
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+}
+function downloadBase64() {
+  if (!logoDataUrl) { alert('Choisis d’abord un logo ou charge un profil avec logo intégré.'); return; }
+  download('signature-base64.html', buildHtml('base64'));
+}
+function downloadRelative() {
+  if (!logoDataUrl) { alert('Choisis d’abord un logo ou charge un profil avec logo intégré.'); return; }
+  download('signature.html', buildHtml('relative'));
+  download(logoFileName, dataUrlToBytes(logoDataUrl), 'application/octet-stream');
+}
+function dataUrlToBytes(dataUrl) {
+  const parts = dataUrl.split(',');
+  const bin = atob(parts[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+function safeProfileFileName(name) {
+  return String(name || 'profil-signature')
+    .trim()
+    .replace(/\.json$/i, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/^[._-]+|[._-]+$/g, '') || 'profil-signature';
+}
+function saveProfileAsJson() {
+  const rawName = prompt('Nom du profil à sauver :', currentProfile().profileName || 'profil-signature');
+  if (rawName === null) return;
+  const fileName = safeProfileFileName(rawName) + '.json';
+  const profile = currentProfile();
+  profile.profileName = fileName.replace(/\.json$/i, '');
+  download(fileName, JSON.stringify(profile, null, 2), 'application/json;charset=utf-8');
+}
+function downloadProfile() {
+  saveProfileAsJson();
+}
+function downloadReadme() {
+  const txt = `Signature Thunderbird - Windows/Linux\n\n1. Ouvrir signature_generator_browser.html dans un navigateur.\n2. Optionnel : charger ou sauver un profil JSON.\n3. Modifier les textes et styles champ par champ.\n4. Optionnel : sélectionner les réseaux sociaux et renseigner les URLs.\n5. Télécharger signature-base64.html.\n6. Dans Thunderbird : Paramètres des comptes > Apposer la signature à partir d'un fichier > sélectionner signature-base64.html.\n\nLa version base64 embarque le logo et évite les problèmes de chemin Windows/Linux.\n`;
+  download('README.txt', txt, 'text/plain;charset=utf-8');
+}
+
+populateFields();
+populateSocials();
+renderAll();
+</script>
+</body>
+</html>
